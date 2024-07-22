@@ -1,0 +1,60 @@
+﻿@model DriverRequest
+
+@{
+    var showTab = Convert.ToInt32(ViewData["ShowTab"]);
+}
+
+<div class="container-sm text-center">
+
+	<h1 class="text-start">Панель Адміністратора</h1>
+
+	<hr />
+
+    <ul class="nav nav-pills nav-justified mb-3" id="ex1">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(showTab == 0 ? "active" : "")"                 
+                    data-bs-toggle="pill"
+                    data-bs-target="#pills-addCity"                   
+                    aria-selected="true">
+                Додати місто
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(showTab == 1 ? "active" : "")"
+                    data-bs-toggle="pill"
+                    data-bs-target="#pills-reviewRequests"                    
+                    aria-selected="false">
+                Перегляд заявок
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(showTab == 2 ? "active" : "")"
+                    data-bs-toggle="pill"
+                    data-bs-target="#pills-unblockUser"
+                    aria-selected="false">
+                Розблокувати водія
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div class="text-danger mb-2">@ViewBag.Error</div>
+
+        <div class="tab-pane fade @(showTab == 0 ? "show active" : "")" id="pills-addCity" role="tabpanel">
+            @{                
+                await Html.RenderPartialAsync("_AddCity");
+            }
+        </div>
+        <div class="tab-pane fade @(showTab == 1 ? "show active" : "")" id="pills-reviewRequests" role="tabpanel">
+            @{
+                await Html.RenderPartialAsync("_ReviewRequests");
+            }
+        </div>
+        <div class="tab-pane fade @(showTab == 2 ? "show active" : "")" id="pills-unblockUser" role="tabpanel">
+            @{
+                await Html.RenderPartialAsync("_UnblockUser");
+            }
+        </div>
+    </div>
+</div>

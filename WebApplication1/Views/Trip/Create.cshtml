@@ -1,0 +1,91 @@
+﻿@model TripViewModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+<div class="container-sm text-center">
+
+    <h1 class="text-start">Cтворення поїздки</h1>
+
+    <hr />
+
+    <form asp-action="Create" asp-controller="Trip">
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">                
+                    <input type="text"
+                                class="form-control Autocomplete"
+                                placeholder=""
+                                asp-for="DeparturePoint"                                
+                                autocomplete="off">                    
+                    <label asp-for="DeparturePoint" class="form-label">Місце відправлення</label>                
+                </div>
+                <span class="text-danger" asp-validation-for="DeparturePoint"></span>
+            </div>
+        </div>
+        <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">                
+                    <input type="text"
+                            class="form-control Autocomplete"
+                            placeholder=""
+                            asp-for="ArrivalPoint"                            
+                            autocomplete="off">
+                    <label asp-for="DeparturePoint" class="form-label">Місце призначення</label>                
+                </div>
+                <span class="text-danger" asp-validation-for="ArrivalPoint"></span>
+                </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">                
+                    <input type="datetime-local"
+                            class="form-control dateinput"
+                            placeholder=""
+                            asp-for="DepartureTime">
+                    <label asp-for="DepartureTime" class="form-label">Дата та час поїздки</label>
+                </div>
+                <span class="text-danger" asp-validation-for="DepartureTime"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="mb-3 text-start">
+                    <label class="form-label" for="customRange1">Кількість місць для пасажирів:</label>
+                    <output>&nbsp3</output>
+                    <input type="range" class="form-range" id="customRange1"
+                            min="1"
+                            max="4"
+                            oninput="this.previousElementSibling.value = '&nbsp'+this.value"
+                            asp-for="AmountOfSeats">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">                
+                    <input type="number"
+                            class="form-control"
+                            placeholder=""
+                            min="20"
+                            max="3000"   
+                            value="0"
+                            asp-for="Price">
+                    <label for="floatingInput">Ціна поїздки(грн)</label>
+                </div>           
+                <span class="text-danger" asp-validation-for="Price"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <button type="submit" class="btn btn-primary w-100">Опублікувати</button>
+                </div>
+            </div>
+        </div>
+        <div class="text-danger mb-2">@ViewBag.Error</div>
+    </form>
+</div>    
+

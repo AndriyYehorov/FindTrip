@@ -1,0 +1,68 @@
+﻿@using WebApplication1.Models;
+@model DriverViewModel
+
+<form enctype="multipart/form-data" asp-action="CreateDriverRequest" asp-controller="User">
+
+    <div class="row">
+        <label class="form-label">Виберіть фото водійського посвідчення:</label>
+
+        <div class="col">
+            <div class="mb-3">
+
+                <input type="file" asp-for="DriverLicense" accept="image/*" class="form-control" />
+
+                <span class="text-danger" asp-validation-for="DriverLicense"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <label class="form-label">Заповніть ваше ім'я та прізвище:</label>
+
+        <div class="col">
+            <div class="form-floating mb-3">
+                <input type="text"
+                       class="form-control"
+                       placeholder=""
+                       asp-for="Name"
+                       autocomplete="off">
+                <label class="form-label">Ім'я</label>
+                <span class="text-danger" asp-validation-for="Name"></span>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="form-floating mb-3">
+                <input type="text"
+                       class="form-control"
+                       placeholder=""
+                       asp-for="Surname"
+                       autocomplete="off">
+                <label class="form-label">Прізвище</label>
+                <span class="text-danger" asp-validation-for="Surname"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <label class="form-label">Заповніть ваш номер телефону(без коду країни):</label>
+                
+        <div class="col">
+            <div class="form-floating mb-3">
+                <input type="tel"
+                       class="form-control"
+                       placeholder=""
+                       asp-for="PhoneNumber"
+                       autocomplete="off">
+                <label class="form-label">Номер телефону</label>
+                <span class="text-danger" asp-validation-for="PhoneNumber"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="text-danger mb-2">@ViewBag.Errord</div>
+    <button type="submit" class="btn btn-primary w-100">Відправити</button>
+</form>    

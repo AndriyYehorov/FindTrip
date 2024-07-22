@@ -1,0 +1,121 @@
+﻿@model TripViewModel
+
+@{
+    ViewData["Title"] = "Index";
+
+    var IsDataNull = ViewData["Trips"] == null;
+    var trips = (ViewData["Trips"] as List<Trip>);
+    var showTable = trips?.Count() < 1 ? false : true;
+    var tripsIdWhereUserRegistratedViewData = ViewData["tripsIdWhereUserRegistrated"] as IEnumerable<int>;
+    var tripsIdWhereUserIsCreator = ViewData["tripsIdWhereUserIsCreator"] as IEnumerable<int>;
+    var driversRating = ViewData["driverRatingsForAllTrips"] as List<float?>;
+
+}
+
+<div class="container-sm text-center">
+
+    <h1 class="text-start">Знайти поїздку</h1>
+
+    <hr />
+
+    <form asp-action="Index" asp-controller="Trip" method="post">           
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="DeparturePoint" type="text" class="form-control Autocomplete" id="floatingName" placeholder="Departure" autocomplete="off">
+                    <label for="floatingName">Місце відправлення</label>
+                </div>
+                <span class="text-danger" asp-validation-for="DeparturePoint"></span>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="ArrivalPoint" type="text" class="form-control Autocomplete" id="floatingSurname" placeholder="Arrival" autocomplete="off">
+                    <label for="floatingSurname">Місце прибуття</label>
+                </div>
+                <span class="text-danger" asp-validation-for="ArrivalPoint"></span>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="DepartureTime" type="date" class="form-control dateinput" id="floatingSurname" placeholder="Time">
+                    <label for="floatingSurname">Час відправлення</label>
+                </div>
+                <span class="text-danger" asp-validation-for="DepartureTime"></span>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input asp-for="AmountOfSeats" type="number" class="form-control" id="floatingSurname" placeholder="Seats" min="1" max="4" value="1">
+                    <label for="floatingSurname">Кількість місць</label>
+                </div>
+                <span class="text-danger" asp-validation-for="AmountOfSeats"></span>
+            </div>
+            <div class="col">
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary w-100">Знайти</button>
+                </div>
+            </div>
+            <div class="text-danger mb-2">@ViewBag.Error</div>
+        </div>    
+    </form>
+
+    @if (!IsDataNull)
+    {        
+        <hr />
+
+        <div class="@(showTable? "invisible" : "")">
+
+            <h5 class="text-start text-secondary fst-italic">Поїздки не знайдені</h5>
+
+        </div>
+
+        <div class="@(showTable? "" : "invisible")">
+
+            <h1 class="text-start">Знайдені поїздки</h1>
+
+            <table class="table table-sm text-start">
+                <thead>
+                   
+                    <tr>
+                            <th>Місце відправлення</th>
+                            <th>Місце прибуття</th>
+                            <th>Час відправлення</th>
+                            <th>Кількість місць<br>
+                                (залишилось/загалом)</th>
+                            <th>Ціна</th>
+                            <th>Рейтинг водія</th>
+                            <th></th>
+                        </tr>                  
+                </thead>
+                @foreach (var trip in trips)
+                {
+                    <tr>
+                        <td>@trip.DeparturePoint</td>
+                        <td>@trip.ArrivalPoint</td>                
+                        <td>@trip.DepartureTime</td>
+                        <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
+                        <td>@trip.Price</td>
+                        <td>
+                            @driversRating.ElementAt(trips.IndexOf(trip)) / 5,0
+                        </td>
+
+                        <td>
+                            @if (tripsIdWhereUserRegistratedViewData.Contains(trip.Id))
+                            {
+                                <p>Ви вже зареєстровані.</p>
+                            }
+                            else if (tripsIdWhereUserIsCreator.Contains(trip.Id))
+                            {
+                                <p>Ви водій цієї поїздки.</p>
+                            }
+                            else {
+                                <form>
+                                    <input name="TripId" type="text" value="@trip.Id" hidden>
+                                    <button type="submit" class="btn btn-success" asp-action="TripRegistration" asp-controller="Trip">Зареєструватися</button>                                
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </table> 
+        </div>        
+    }
+</div>

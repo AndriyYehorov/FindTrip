@@ -1,0 +1,134 @@
+﻿@model ProfileViewModel
+
+@{
+    ViewData["Title"] = "Profile";
+    var userStatus = ViewData["UserStatus"]?.ToString();
+    var partialModel = ViewData["DriverModel"] as DriverViewModel;    
+}
+
+<div class="container-sm">
+
+    <h1>Профіль</h1>
+
+    <hr />
+
+    <form asp-action="ChangePassword" asp-controller="User">
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">                   
+                        <input type="text"
+                                class="form-control"
+                                placeholder=""
+                                asp-for="Login"
+                                readonly>
+                        <label class="form-label">Логін</label>                    
+                    </div>                    
+                </div>
+
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder=""
+                               asp-for="Email"
+                               readonly>
+                        <label class="form-label">Електронна адреса</label>
+                    </div>
+                </div>
+            </div>
+            @if (userStatus=="accepted")
+            {
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder="" 
+                               value= "@(partialModel?.Name)"
+                               readonly>
+                        <label class="form-label">Ім'я</label>
+                    </div>                   
+                </div>
+
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder=""
+                               value= "@(partialModel?.Surname ?? "")"
+                               readonly>                               
+                        <label class="form-label">Прізвище</label>
+                    </div>                   
+                </div>
+
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder=""
+                               value="@(partialModel?.PhoneNumber ?? "")"
+                               readonly>
+                        <label class="form-label">Номер телефону</label>
+                    </div>
+                </div>
+            </div>
+            }
+            
+            <div class="row">                
+
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder=""
+                               asp-for="Password"
+                               autocomplete="off">
+                        <label class="form-label">Пароль</label>
+                        <span class="text-danger" asp-validation-for="Password"></span>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <input type="text"
+                               class="form-control"
+                               placeholder=""
+                               asp-for="RepeatPassword"
+                               autocomplete="off">
+                        <label class="form-label">Повторіть Пароль</label>
+                        <span class="text-danger" asp-validation-for="RepeatPassword"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">               
+                <div class="col">
+                    <button type="submit" class="btn btn-primary w-100">Змінити пароль</button>
+                </div>
+            </div>
+            <div class="text-danger mb-2">@ViewBag.Error</div>          
+    </form>
+        
+    <h1>Станьте Водієм</h1>
+
+    <hr />
+
+    @if (userStatus == "accepted")
+    {
+        <h2 class="text-success fst-italic">Ви є Водієм.</h2>
+    }
+    else if (userStatus == "on review")
+    {
+        <h2 class="text-warning fst-italic">Ваша заявка розглядається.</h2>
+    }
+    else if (userStatus == "declined")
+    {
+        <h2 class="text-danger fst-italic">Ваша заявка була відхилена.</h2>
+        await Html.RenderPartialAsync("_Driver", partialModel);
+    }
+    else
+    {
+        await Html.RenderPartialAsync("_Driver", partialModel);
+    }
+</div>  

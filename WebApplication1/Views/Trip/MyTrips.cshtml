@@ -1,0 +1,130 @@
+﻿@{
+    ViewData["Title"] = "MyTrips";
+    var isVisibleEndedTab = Convert.ToBoolean(ViewData["isVisibleEndedTab"]);
+    var futureTrips = ViewData["FutureTrips"] as IEnumerable<Trip>;
+    var endedTrips = ViewData["EndedTrips"] as IEnumerable<Trip>;
+    var userId = ViewData["UserId"] as int?; 
+}
+
+<div class="container-sm text-center">
+
+    <h1 class="text-start">Мої поїздки</h1>
+    <div class="text-danger mb-2">@ViewBag.Error</div>
+    <hr />
+
+    <ul class="nav nav-pills nav-justified mb-3" id="ex1">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(!isVisibleEndedTab ? "active" : "")"
+                    id="tab-login"
+                    data-bs-toggle="pill"
+                    data-bs-target="#pills-login"                    
+                    aria-controls="pills-login"
+                    aria-selected="true">
+                    Заплановані
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(isVisibleEndedTab? "active" : "")"
+                    id="tab-register"
+                    data-bs-toggle="pill"
+                    data-bs-target="#pills-register"                    
+                    aria-controls="pills-register"
+                    aria-selected="false">
+                    Завершені
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content">
+        
+        <div class="tab-pane fade @(!isVisibleEndedTab? "show active" : "")" id="pills-login">
+            @if (futureTrips.Count() > 0)
+            {
+                <table class="table table-sm text-start">
+                    <thead>
+                        <tr>
+                            <th>Місце відправлення</th>
+                            <th>Місце прибуття</th>
+                            <th><a asp-action="MyTrips" asp-route-sortOrder="@(Convert.ToString(ViewData["DateSortParm"]))">Час відправлення</a></th>
+                            <th>
+                                Кількість місць<br>(залишилось/загалом)
+                            </th>                            
+                            <th><a asp-action="MyTrips" asp-route-sortOrder="@(Convert.ToString(ViewData["PriceSortParm"]))">Ціна</a></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                @foreach (var trip in futureTrips)
+                {                    
+                    <tr>
+                        <td>@trip.DeparturePoint</td>
+                        <td>@trip.ArrivalPoint</td>
+                        <td>@trip.DepartureTime</td>
+                        <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
+                        <td>@trip.Price</td>
+                        <td>
+                            @if (userId==trip.UserId)
+                            {
+                                <form>
+                                    <input name="TripId" type="text" value="@trip.Id" hidden>
+                                    <button type="submit" class="btn btn-danger" asp-action="CancelTrip" asp-controller="Trip">Відмінити поїздку</button>
+                                </form>
+                            }
+                            else{
+                                <form>
+                                    <input name="TripId" type="text" value="@trip.Id" hidden>
+                                    <button type="submit" class="btn btn-danger" asp-action="CancelTripRegistration" asp-controller="Trip">Відмінити реєстрацію</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </table>
+            }
+            else
+            {
+                 <h5 class="text-start text-secondary fst-italic">У вас немає запланованих поїздок.</h5>
+            }            
+        </div>
+        <div class="tab-pane fade @(isVisibleEndedTab? "show active" : "")" id="pills-register">
+            @if (endedTrips.Count() > 0)
+            {
+                <table class="table table-sm text-start">
+                    <thead>
+                        <tr>
+                            <th>Місце відправлення</th>
+                            <th>Місце прибуття</th>
+                            <th><a asp-action="MyTrips" asp-route-sortOrder="@(Convert.ToString(ViewData["DateSortParm"])+'Q')">Час відправлення</a></th>
+                            <th>
+                                Кількість місць<br>(залишилось/загалом)
+                            </th>
+                            <th><a asp-action="MyTrips" asp-route-sortOrder="@(Convert.ToString(ViewData["PriceSortParm"])+'Q')">Ціна</a></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                @foreach (var trip in endedTrips)
+                {
+                    <tr>
+                        <td>@trip.DeparturePoint</td>
+                        <td>@trip.ArrivalPoint</td>
+                        <td>@trip.DepartureTime</td>
+                        <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
+                        <td>@trip.Price</td>
+                        <td>
+                            @if (userId != trip.UserId && DateTime.Now.Subtract(trip.DepartureTime).TotalHours < 24)
+                            {
+                                <form>
+                                    <input name="tripId" type="text" value="@trip.Id" hidden>                                   
+                                    <button type="submit" class="btn btn-primary" asp-action="Report" asp-controller="Trip">Залишити відгук</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </table>
+            }
+            else
+            {
+                <h5 class="text-start text-secondary fst-italic">У вас немає закінчених поїздок.</h5>                
+            }
+        </div>
+    </div>
+</div>

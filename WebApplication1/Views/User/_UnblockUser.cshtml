@@ -1,0 +1,67 @@
+﻿@{
+	var isReportsNull = ViewData["Reports"] == null;
+	var reports = ViewData["Reports"] as IEnumerable<Report>;
+	var isReportsEmpty = reports?.Count() < 1;
+}
+
+<h2 class="text-start">Розблокувати водія</h2>
+
+<hr />
+
+<form>
+	<div class="row">
+		<div class="col">
+			<div class="form-floating mb-3">
+				<input type="text" class="form-control" name="login" placeholder="" autocomplete="off" />
+				<label for="floatingName">Логін водія</label>				
+			</div>
+		</div>
+		<div class="col">
+			<div class="mb-3">
+				<button type="submit" class="btn btn-dark w-100" asp-action="GetDriverReports" asp-controller="User">Перевірити інформацію</button>
+			</div>
+		</div>
+		<div class="col">
+			<div class="mb-3">
+				<button type="submit" class="btn btn-primary w-100" asp-action="UnbanDriver" asp-controller="User">Розблокувати</button>
+			</div>
+		</div>		
+	</div>
+
+</form>
+
+@if (!isReportsNull)
+{
+	if (!isReportsEmpty)
+	{
+		<table class="table table-sm text-start">
+			<thead>
+				<tr>
+					<th>Текст</th>
+					<th>Оцінка</th>
+					<th>Id Створившого</th>
+					<th>Id Водія</th>
+					<th>Id Поїздки</th>
+					<th></th>
+				</tr>
+			</thead>
+
+			@foreach (var report in reports)
+			{
+				<tr>
+					<td>@report.Text</td>
+					<td>@report.Rating</td>
+					<td>@report.CreatorId</td>
+					<td>@report.ReportedId</td>
+					<td>@report.TripId</td>
+				</tr>
+			}
+
+		</table>
+	}
+	else
+	{
+		<h5 class="text-start text-secondary fst-italic">На цього користувача немає скарг</h5>
+	}
+
+}
