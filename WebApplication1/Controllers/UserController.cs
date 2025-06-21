@@ -11,6 +11,7 @@ using System.Drawing.Printing;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Text;
 using System.Text.RegularExpressions;
 using WebApplication1.Models;
 
@@ -76,9 +77,9 @@ namespace WebApplication1.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, role)
+                new (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new (ClaimsIdentity.DefaultNameClaimType, user.Login),
+                new (ClaimsIdentity.DefaultRoleClaimType, role)
             };
 
             var id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
@@ -116,11 +117,13 @@ namespace WebApplication1.Controllers
 				});
 			}
 
-			user = new User(model.Login, model.Password);
-            user.Email = model.Email;
-            user.Role = "user";
-            user.AmountOfReports = 0;
-            user.AmountOfBadReports = 0;
+            user = new User(model.Login, model.Password)
+            {
+                Email = model.Email,
+                Role = "user",
+                AmountOfReports = 0,
+                AmountOfBadReports = 0
+            };
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
@@ -252,15 +255,16 @@ namespace WebApplication1.Controllers
                 ViewBag.Errord = fileVal;
 
                 return View("Profile", profModel);
-            }          
+            }
 
-            var request = new DriverRequest();            
+            var request = new DriverRequest
+            {
+                Name = model.Name,
+                Surname = model.Surname,
+                PhoneNumber = model.PhoneNumber
+            };
 
-            request.Name = model.Name;
-            request.Surname = model.Surname;
-            request.PhoneNumber = model.PhoneNumber;
-
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new())
             {
                 await model.DriverLicense.CopyToAsync(ms);
                 request.DriverLicense = ms.ToArray();                
@@ -278,18 +282,20 @@ namespace WebApplication1.Controllers
         private string FileValidation(IFormFile file)
         {
             int maxSize = 5000000; //в байтах (5Мб)
-            string[] permittedExtensions = { ".png", ".jpg", ".gif", ".jpeg" };            
+            string[] permittedExtensions = [".png", ".jpg", ".gif", ".jpeg"];            
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (string.IsNullOrEmpty(ext) || !permittedExtensions.Contains(ext))
             {
-                var extensionStr = "";
+                StringBuilder extensionStr = new();
 
                 foreach (var str in permittedExtensions)
-                    extensionStr += str + " ";
+                {
+                    extensionStr.Append($"{str} ");
+                }
 
-                return "Файл повинен мати одне з наступних розширень: " + extensionStr;
+                return "Файл повинен мати одне з наступних розширень: " + extensionStr.ToString();
             }
 
             else if(file.Length> maxSize)
@@ -348,7 +354,7 @@ namespace WebApplication1.Controllers
 
             var regExp = new Regex("^[а-яґєіїА-ЯҐЄІЇ]+$");            
 
-            if (newCityName == null || newCityName.Count() < 3 || newCityName.Count() > 25 || !regExp.IsMatch(newCityName))
+            if (newCityName == null || newCityName.Length < 3 || newCityName.Length > 25 || !regExp.IsMatch(newCityName))
 			{		
                 return RedirectToAction("AdminPanel", new { errorMsg = "Назва міста повинна бути довжиною від 3 до 25 символів і містити тільки кирилицю" });
             }
@@ -358,10 +364,12 @@ namespace WebApplication1.Controllers
                 return RedirectToAction("AdminPanel", new { errorMsg = "Назва цього міста вже є у базі" });
             }
 
-			var city = new City();
-            city.Name = newCityName;
+            var city = new City
+            {
+                Name = newCityName
+            };
 
-			await _context.Cities.AddAsync(city);
+            await _context.Cities.AddAsync(city);
 			await _context.SaveChangesAsync();			
 
 			return RedirectToAction("AdminPanel");

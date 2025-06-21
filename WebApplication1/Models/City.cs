@@ -7,8 +7,10 @@ namespace WebApplication1.Models
         public int Id {  get; set; }
 
         [MaxLength(255)]
-        public string Name { get; set; }
+        public string Name { get; set; }       
 
-        public string Coordinates { get; set; }
+        public List<Trip> ArrivalPoints { get; set; } = new();
+
+        public List<Trip> DeparturePoints { get; set; } = new();
     }
 }

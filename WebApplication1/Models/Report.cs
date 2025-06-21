@@ -16,10 +16,10 @@ namespace WebApplication1.Models
         public int TripId { get; set; }        
 
         [ForeignKey("CreatorId")]
-        public User User { get; set; }
+        public User Creator { get; set; }
 
         [ForeignKey("ReportedId")]
-        public User User1 { get; set; }
+        public User Reporter { get; set; }
 
 		[ForeignKey("TripId")]
 		public Trip Trip { get; set; }

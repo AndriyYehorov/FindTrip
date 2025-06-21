@@ -43,5 +43,13 @@ namespace WebApplication1.Models
         public float? Rating { get; set; }
 
         public bool? isBanned {  get; set; }
+
+        public List<Trip> Trips { get; set; }
+
+        public List<TripRegistration> Registrations { get; set; }
+
+        public List<Report> Reporteds { get; set; }
+
+        public List<Report> Reporters { get;}
     }
 }

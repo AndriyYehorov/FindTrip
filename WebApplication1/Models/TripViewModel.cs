@@ -7,10 +7,10 @@ namespace WebApplication1.Models
         public DateTime DepartureTime { get; set; }
 
         [Required(ErrorMessage = "Дане поле обов'язкове")]
-        public string? DeparturePoint { get; set; }
+        public string DeparturePoint { get; set; }
 
         [Required(ErrorMessage = "Дане поле обов'язкове")]
-        public string? ArrivalPoint { get; set; }        
+        public string ArrivalPoint { get; set; }        
         public int AmountOfFreeSeats { get; set; }
 
         [Required(ErrorMessage = "Дане поле обов'язкове")]

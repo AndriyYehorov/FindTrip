@@ -8,7 +8,7 @@
     var showTable = trips?.Count() < 1 ? false : true;
     var tripsIdWhereUserRegistratedViewData = ViewData["tripsIdWhereUserRegistrated"] as IEnumerable<int>;
     var tripsIdWhereUserIsCreator = ViewData["tripsIdWhereUserIsCreator"] as IEnumerable<int>;
-    var driversRating = ViewData["driverRatingsForAllTrips"] as List<float?>;
+    var driversRating = ViewData["driverRatingsForAllTrips"] as IEnumerable<float>;
 
 }
 
@@ -88,8 +88,8 @@
                 @foreach (var trip in trips)
                 {
                     <tr>
-                        <td>@trip.DeparturePoint</td>
-                        <td>@trip.ArrivalPoint</td>                
+                        <td>@trip.DeparturePoint.Name</td>
+                        <td>@trip.ArrivalPoint.Name</td>                
                         <td>@trip.DepartureTime</td>
                         <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
                         <td>@trip.Price</td>

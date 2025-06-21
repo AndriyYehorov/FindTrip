@@ -10,12 +10,12 @@ namespace WebApplication1.Models
 
         public Trip(           
             DateTime departureDateTime,
-            int departurePoint,
-            int arrivalPoint,
+            City departurePoint,
+            City arrivalPoint,
             int amountOfFreeSeats,
             int amountOfSeats,
             int price,
-            int userId
+            User creator
         )
         {            
             DepartureTime = departureDateTime;
@@ -24,7 +24,7 @@ namespace WebApplication1.Models
             AmountOfFreeSeats = amountOfFreeSeats;
             AmountOfSeats = amountOfSeats;
             Price = price;
-            UserId = userId;            
+            Creator = creator;            
         }
 
         public int Id { get; set; }
@@ -32,26 +32,23 @@ namespace WebApplication1.Models
         public DateTime DepartureTime { get; set; }
 
         [MaxLength(255)]
-        public int DeparturePoint { get; set; }
+        public int DeparturePointId { get; set; }
+
+        [ForeignKey("DeparturePointId")]
+        public City DeparturePoint{ get; set; }
 
         [MaxLength(255)]
-        public int ArrivalPoint { get; set;}
+        public int ArrivalPointId { get; set;}
+
+        [ForeignKey("ArrivalPointId")]
+        public City ArrivalPoint { get; set; }
 
         public int AmountOfFreeSeats { get; set; }
         public int AmountOfSeats { get; set;}
 
         public int Price {  get; set;}
 
-        public int UserId { get; set; }
-
-        [ForeignKey("UserId")]            
-        public User User {  get; set; }
-
-		[ForeignKey("DeparturePoint")]
-		public City City { get; set; }
-
-		[ForeignKey("ArrivalPoint")]
-		public City City1 { get; set; }
+        public User Creator { get; set; }        
 	}
 
 }

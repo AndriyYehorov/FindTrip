@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using WebApplication1.Filters;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
@@ -17,6 +18,7 @@ namespace WebApplication1.Controllers
 
         [AllowAnonymous]
         [HttpGet]
+        [EdgeFilter]
         public IActionResult Index()
         {           
             return View();
@@ -31,39 +33,30 @@ namespace WebApplication1.Controllers
                 return View("Index",model);
             }
 
-            var cities = await _context.Cities.Select(c => c.Name).ToListAsync();
+            var cityValidation = AreCitiesValidInModel(model);
 
-            var isValidCity = cities.Contains(model.DeparturePoint) && cities.Contains(model.ArrivalPoint);
-            var isValidTime = model.DepartureTime.Date >= DateTime.Now.Date;
-            var arePointsDifferent = model.ArrivalPoint != model.DeparturePoint;
-
-            if (!(isValidCity && isValidTime && arePointsDifferent))
+            if (!cityValidation.isValid)
             {
-                ViewBag.Error = GetErrorMessage(isValidCity, arePointsDifferent);
-                return View("Index");
+                ViewBag.Error = cityValidation.errorMessage;
+                return View("Index", model);
             }
 
-            var DepartureCityId = await _context.Cities.Where(c => c.Name == model.DeparturePoint).Select(c => c.Id).FirstOrDefaultAsync();
-            var ArrivalCityId = await _context.Cities.Where(c => c.Name == model.ArrivalPoint).Select(c => c.Id).FirstOrDefaultAsync();
+            var DepartureCity = await _context.Cities.FirstOrDefaultAsync(c => c.Name == model.DeparturePoint);
+            var ArrivalCity = await _context.Cities.FirstOrDefaultAsync(c => c.Name == model.ArrivalPoint);
 
-            var trips = await _context.Trips.Where(tr => tr.DeparturePoint == DepartureCityId &&
-                                        tr.ArrivalPoint == ArrivalCityId &&
+            var trips = await _context.Trips.Include(t => t.Creator).Where(
+                                        tr => tr.DeparturePoint == DepartureCity &&
+                                        tr.ArrivalPoint == ArrivalCity &&
                                         tr.AmountOfSeats >= model.AmountOfSeats &&
                                         tr.DepartureTime.Date >= model.DepartureTime.Date &&
                                         tr.DepartureTime >= DateTime.Now).OrderBy(t => t.DepartureTime).ToListAsync();
 
-            var driversId = from t in trips select t.UserId;
+            var driversId = trips.Select(t => t.Creator.Id);
+            var driversInfo = await _context.Users.Where(u => driversId.Contains(u.Id)).ToListAsync();
 
-            var driversInfo = await _context.Users.Where(u => driversId.Contains(u.Id)).ToListAsync(); 
+            var driversRatings = driversInfo.Select(d => d.Rating ?? 0);      
 
-            var driversRatingsForAllTrips = new List<float?>();
-
-            foreach (var driverId in driversId)
-            {
-                driversRatingsForAllTrips.Add((from d in driversInfo where driverId == d.Id select d.Rating ??= 0).FirstOrDefault());
-            }
-
-            ViewData["driverRatingsForAllTrips"] = driversRatingsForAllTrips;
+            ViewData["driverRatingsForAllTrips"] = driversRatings;
 
             ViewData["Trips"] = trips;
             ViewData["tripsIdWhereUserRegistrated"] = new List<int>();
@@ -73,7 +66,7 @@ namespace WebApplication1.Controllers
             {
                 var userId = GetUserId();
                 var tripsIdWhereUserRegistrated = await _context.TripRegistrations.Where(tr => tr.UserId == userId).Select(tr => tr.TripId).ToListAsync();
-                var tripsIdWhereUserIsCreator = await _context.Trips.Where(tr => tr.UserId == userId).Select(t => t.Id).ToListAsync();
+                var tripsIdWhereUserIsCreator = trips.Where(tr => tr.Creator.Id == userId).Select(t => t.Id);
                 
                 ViewData["tripsIdWhereUserRegistrated"] = tripsIdWhereUserRegistrated;
                 ViewData["tripsIdWhereUserIsCreator"] = tripsIdWhereUserIsCreator;
@@ -99,7 +92,7 @@ namespace WebApplication1.Controllers
               
         [HttpPost]
         [Authorize(Roles = "admin, driver")]
-        public async Task<IActionResult> Create(TripViewModel model)
+        public async Task<IActionResult> CreateTrip(TripViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -108,9 +101,9 @@ namespace WebApplication1.Controllers
 
             var userId = GetUserId();
 
-            var driver = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var creator = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-            if (driver.isBanned == true)
+            if (creator?.isBanned == true)
             {
                 ViewBag.Error = "Ви не можете створювати поїдки через надмірку кількість скарг, для розблокування зв'яжіться з адміністратором за номером телефону : +380353759714";
                 return View("Create", model);
@@ -128,16 +121,16 @@ namespace WebApplication1.Controllers
                 return View("Create", model);
             }
 
-            var DepartureCityId = await _context.Cities.Where(c => c.Name == model.DeparturePoint).Select(c => c.Id).FirstOrDefaultAsync();
-            var ArrivalCityId = await _context.Cities.Where(c => c.Name == model.ArrivalPoint).Select(c => c.Id).FirstOrDefaultAsync();
+            var DepartureCity = await _context.Cities.Where(c => c.Name == model.DeparturePoint).FirstOrDefaultAsync();
+            var ArrivalCity = await _context.Cities.Where(c => c.Name == model.ArrivalPoint).FirstOrDefaultAsync();
 
             var trip = new Trip(model.DepartureTime,    
-                                DepartureCityId, 
-                                ArrivalCityId,
+                                DepartureCity, 
+                                ArrivalCity,
                                 model.AmountOfSeats,
                                 model.AmountOfSeats,
                                 model.Price,
-                                GetUserId());     
+                                creator);     
 
             _context.Trips.Add(trip);
             await _context.SaveChangesAsync();
@@ -149,13 +142,13 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> TripRegistration(int tripId)
         {
             var userId = GetUserId();
-            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+            var trip = await _context.Trips.Include(t => t.Creator).FirstOrDefaultAsync(t => t.Id == tripId);
 
-            var userIsNotCreator = userId != trip.UserId;
+            var userIsNotCreator = userId != trip?.Creator.Id;
 
             var registationsOnThisTripThisUser = await _context.TripRegistrations.Where(tr => tr.TripId == tripId && tr.UserId == userId).ToListAsync();               
 
-            if (trip.AmountOfFreeSeats > 0 && registationsOnThisTripThisUser.Count() == 0 && userIsNotCreator)  
+            if (trip?.AmountOfFreeSeats > 0 && registationsOnThisTripThisUser.Count == 0 && userIsNotCreator)  
             {
                 trip.AmountOfFreeSeats -= 1;
 
@@ -192,7 +185,7 @@ namespace WebApplication1.Controllers
             var userId = GetUserId();
 
             var thisUserRegistations = await _context.TripRegistrations.Where(tr => tr.UserId == userId).Select(tr => tr.TripId).ToListAsync();
-            var thisUserTrips = await _context.Trips.Where(t => t.UserId == userId || thisUserRegistations.Contains(t.Id)).OrderBy(t=> t.DepartureTime).ToListAsync();
+            var thisUserTrips = await _context.Trips.Include(t => t.Creator).Include(t => t.ArrivalPoint).Include(t => t.DeparturePoint).Where(t => t.Creator.Id == userId || thisUserRegistations.Contains(t.Id)).OrderBy(t=> t.DepartureTime).ToListAsync();
 
             var endedTrips = new List<Trip>();
             var futureTrips = new List<Trip>();
@@ -256,9 +249,9 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> CancelTrip(int tripId)
         {
             var userId = GetUserId();
-            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+            var trip = await _context.Trips.Include(t => t.Creator).FirstOrDefaultAsync(t => t.Id == tripId);
 
-            var userIsCreator = userId == trip.UserId;
+            var userIsCreator = userId == trip?.Creator.Id;
 
             var registationsOnThisTrip = await _context.TripRegistrations.Where(tr => tr.TripId == tripId).ToListAsync();           
 
@@ -295,37 +288,39 @@ namespace WebApplication1.Controllers
 
             var tripRegistrations = await _context.TripRegistrations.Where(t => t.TripId == model.TripId).Select(t => t.UserId).ToListAsync();
 
-            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == model.TripId);
+            var trip = await _context.Trips.Include(t => t.Creator).FirstOrDefaultAsync(t => t.Id == model.TripId);
 
-            if (!tripRegistrations.Contains(userId) || trip.UserId == userId)
+            if (!tripRegistrations.Contains(userId) || trip?.Creator.Id == userId)
             {
                 ViewBag.Error = "Ви не можете залишати відгук на цю поїздку";
                 return View("Report", model);
             }            
 
-            var driver = await _context.Users.FirstOrDefaultAsync(u => u.Id == trip.UserId);
+            var driver = await _context.Users.FirstOrDefaultAsync(u => u.Id == trip.Creator.Id);
 
             var reportsOfThisDriver = await _context.Reports.Where(r => r.ReportedId == driver.Id).ToListAsync();
 
             var reportsOfThisDriverOnThisTripByThisUser = from r in reportsOfThisDriver where r.TripId == model.TripId && r.CreatorId == userId select r;
                                          
-            if (reportsOfThisDriverOnThisTripByThisUser.Count() > 0) 
+            if (reportsOfThisDriverOnThisTripByThisUser.Any()) 
             {
                 ViewBag.Error = "Ви вже залишали відгук на цього водія за цю поїздку";
                 return View("Report", model);
             }
 
-			var report = new Report();
-            report.Text = model.Text;
-            report.TripId = model.TripId;
-            report.CreatorId = userId;
-            report.Rating = int.Parse(model.Rating);
-            report.ReportedId = driver.Id;
+            var report = new Report
+            {
+                Text = model.Text,
+                TripId = model.TripId,
+                CreatorId = userId,
+                Rating = int.Parse(model.Rating),
+                ReportedId = driver.Id
+            };
 
             if (driver.Rating == null) 
                 driver.Rating = report.Rating;  
             else
-                driver.Rating = (driver.Rating * reportsOfThisDriver.Count() + report.Rating) / (reportsOfThisDriver.Count() + 1);
+                driver.Rating = (driver.Rating * reportsOfThisDriver.Count + report.Rating) / (reportsOfThisDriver.Count + 1);
 
             driver.AmountOfReports += 1;
 
@@ -349,7 +344,7 @@ namespace WebApplication1.Controllers
             return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         }
 
-        private string GetErrorMessage(bool isValidCity, bool arePointsDifferent)
+        private static string GetErrorMessage(bool isValidCity, bool arePointsDifferent)
         {
             if (!isValidCity)
             {
@@ -364,5 +359,16 @@ namespace WebApplication1.Controllers
                 return "Час відправлення повинен бути не раніше чим через годину він цього моменту.";
             }
         }        
+
+        private (bool isValid, string errorMessage) AreCitiesValidInModel(TripViewModel model) 
+        {
+            var cities = _context.Cities.Select(c => c.Name).ToList();
+
+            var isValidCity = cities.Contains(model.DeparturePoint) && cities.Contains(model.ArrivalPoint);
+            var isValidTime = model.DepartureTime.Date >= DateTime.Now.Date;
+            var arePointsDifferent = model.ArrivalPoint != model.DeparturePoint;            
+
+            return new (isValidCity && isValidTime && arePointsDifferent, GetErrorMessage(isValidCity, arePointsDifferent) );            
+        }
     }    
 }

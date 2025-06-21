@@ -55,13 +55,13 @@
                 @foreach (var trip in futureTrips)
                 {                    
                     <tr>
-                        <td>@trip.DeparturePoint</td>
-                        <td>@trip.ArrivalPoint</td>
+                        <td>@trip.DeparturePoint.Name</td>
+                        <td>@trip.ArrivalPoint.Name</td>
                         <td>@trip.DepartureTime</td>
                         <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
                         <td>@trip.Price</td>
                         <td>
-                            @if (userId==trip.UserId)
+                            @if (userId==trip.Creator.Id)
                             {
                                 <form>
                                     <input name="TripId" type="text" value="@trip.Id" hidden>
@@ -103,13 +103,13 @@
                 @foreach (var trip in endedTrips)
                 {
                     <tr>
-                        <td>@trip.DeparturePoint</td>
-                        <td>@trip.ArrivalPoint</td>
+                        <td>@trip.DeparturePoint.Name</td>
+                        <td>@trip.ArrivalPoint.Name</td>
                         <td>@trip.DepartureTime</td>
                         <td>@trip.AmountOfFreeSeats / @trip.AmountOfSeats</td>
                         <td>@trip.Price</td>
                         <td>
-                            @if (userId != trip.UserId && DateTime.Now.Subtract(trip.DepartureTime).TotalHours < 24)
+                            @if (userId != trip.Creator.Id && DateTime.Now.Subtract(trip.DepartureTime).TotalHours < 24)
                             {
                                 <form>
                                     <input name="tripId" type="text" value="@trip.Id" hidden>                                   
